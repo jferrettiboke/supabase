@@ -1,0 +1,93 @@
+Supabase Auth can throw or return various errors when using the API. All errors originating from the `supabase.auth` namespace of the JavaScript client library will be wrapped by the `AuthError` class.
+
+Error objects are split in a few classes:
+
+- `AuthApiError` -- errors which originate from the Supabase Auth API.
+  - Use `isAuthApiError` instead of `instanceof` checks to see if an error you caught is of this type.
+- `CustomAuthError` -- errors which generally originate from state in the client library.
+  - Use the `name` property on the error to identify the class of error received.
+
+Errors originating from the server API classed as `AuthApiError` always have a `code` property that can be used to identify the error returned by the server. The `status` property is also present, encoding the HTTP status code received in the response.
+
+In general the HTTP status codes you will likely receive are:
+
+- [403 Forbidden](#) is sent out in rare situations where a certain Auth feature is not available for the user, and you as the developer are not checking a precondition whether that API is available for the user.
+- [422 Unprocessable Entity](#) is sent out when the API request is accepted, but cannot be processed because the user or Auth server is in a state where it cannot satisfy the request.
+- [429 Too Many Requests](#) is sent out when rate-limits are breached for an API. You should handle this status code often, especially in functions that authenticate a user.
+- [500 Internal Server Error](#) often means that the Auth server's service is degraded. Most often it points to issues in your database setup such as a misbehaving trigger on a schema, function, view or other database object.
+- [501 Not Implemented](#) a feature is not enabled on the Auth server, and you are trying to use an API which requires it.
+
+To supplement HTTP status codes, Supabase Auth returns a string error code which gives you more insight into what went wrong. These codes are stable and can be used to present an internationalized message to your users.
+
+| Code                                    | Description |
+| --------------------------------------- | ----------- |
+| 'unexpected_failure'                    | xyz         |
+| 'validation_failed'                     | xyz         |
+| 'bad_json'                              | xyz         |
+| 'email_exists'                          | xyz         |
+| 'phone_exists'                          | xyz         |
+| 'bad_jwt'                               | xyz         |
+| 'not_admin'                             | xyz         |
+| 'no_authorization'                      | xyz         |
+| 'user_not_found'                        | xyz         |
+| 'session_not_found'                     | xyz         |
+| 'flow_state_not_found'                  | xyz         |
+| 'flow_state_expired'                    | xyz         |
+| 'signup_disabled'                       | xyz         |
+| 'user_banned'                           | xyz         |
+| 'provider_email_needs_verification'     | xyz         |
+| 'invite_not_found'                      | xyz         |
+| 'bad_oauth_state'                       | xyz         |
+| 'bad_oauth_callback'                    | xyz         |
+| 'oauth_provider_not_supported'          | xyz         |
+| 'unexpected_audience'                   | xyz         |
+| 'single_identity_not_deletable'         | xyz         |
+| 'email_conflict_identity_not_deletable' | xyz         |
+| 'identity_already_exists'               | xyz         |
+| 'email_provider_disabled'               | xyz         |
+| 'phone_provider_disabled'               | xyz         |
+| 'too_many_enrolled_mfa_factors'         | xyz         |
+| 'mfa_factor_name_conflict'              | xyz         |
+| 'mfa_factor_not_found'                  | xyz         |
+| 'mfa_ip_address_mismatch'               | xyz         |
+| 'mfa_challenge_expired'                 | xyz         |
+| 'mfa_verification_failed'               | xyz         |
+| 'mfa_verification_rejected'             | xyz         |
+| 'insufficient_aal'                      | xyz         |
+| 'captcha_failed'                        | xyz         |
+| 'saml_provider_disabled'                | xyz         |
+| 'manual_linking_disabled'               | xyz         |
+| 'sms_send_failed'                       | xyz         |
+| 'email_not_confirmed'                   | xyz         |
+| 'phone_not_confirmed'                   | xyz         |
+| 'reauth_nonce_missing'                  | xyz         |
+| 'saml_relay_state_not_found'            | xyz         |
+| 'saml_relay_state_expired'              | xyz         |
+| 'saml_idp_not_found'                    | xyz         |
+| 'saml_assertion_no_user_id'             | xyz         |
+| 'saml_assertion_no_email'               | xyz         |
+| 'user_already_exists'                   | xyz         |
+| 'sso_provider_not_found'                | xyz         |
+| 'saml_metadata_fetch_failed'            | xyz         |
+| 'saml_idp_already_exists'               | xyz         |
+| 'sso_domain_already_exists'             | xyz         |
+| 'saml_entity_id_mismatch'               | xyz         |
+| 'conflict'                              | xyz         |
+| 'provider_disabled'                     | xyz         |
+| 'user_sso_managed'                      | xyz         |
+| 'reauthentication_needed'               | xyz         |
+| 'same_password'                         | xyz         |
+| 'reauthentication_not_valid'            | xyz         |
+| 'otp_expired'                           | xyz         |
+| 'otp_disabled'                          | xyz         |
+| 'identity_not_found'                    | xyz         |
+| 'weak_password'                         | xyz         |
+| 'over_request_rate_limit'               | xyz         |
+| 'over_email_send_rate_limit'            | xyz         |
+| 'over_sms_send_rate_limit'              | xyz         |
+| 'bad_code_verifier'                     | xyz         |
+
+### Tips for better error handling
+
+- Do not use string matching on error messages! Always use the `name` and `code` properties of error objects to identify the situation.
+- Although HTTP status codes generally don't change, they can suddenly change due to bugs, so avoid relying on them unless absolutely necessary.
