@@ -398,6 +398,12 @@
         "type": "function"
       },
       {
+        "id": "errors",
+        "title": "Error handling",
+        "slug": "errors",
+        "type": "function"
+      },
+      {
         "id": "sign-up",
         "title": "Create a new user",
         "slug": "auth-signup",
